@@ -99,80 +99,6 @@ Available flags:
 - `-tailnet`: Tailscale tailnet identifier (can also use TAILSCALE_TAILNET env var)
 - `-version`: Show version information
 
-## Metrics
-
-The exporter provides comprehensive metrics about your Tailscale network, including detailed per-device information, API keys, DNS configuration, users, and tailnet settings.
-
-### General Metrics
-
-| Metric | Type | Description | Labels |
-|--------|------|-------------|--------|
-| `tailscale_up` | Gauge | Whether Tailscale API is accessible | - |
-
-
-### Device Metrics
-
-| Metric | Type | Description | Labels |
-|--------|------|-------------|--------|
-| `tailscale_device_info` | Gauge | Device information (always 1) | `id`, `name`, `hostname`, `os`, `client_version`, `user`, `tailscale_ip`, `machine_key`, `node_key` |
-| `tailscale_device_online` | Gauge | Whether the device is online (last seen within 5 minutes) | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_authorized` | Gauge | Whether the device is authorized | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_external` | Gauge | Whether the device is external to the tailnet | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_update_available` | Gauge | Whether an update is available for the device | `id`, `name`, `hostname`, `os`, `user`, `client_version` |
-| `tailscale_device_key_expiry_disabled` | Gauge | Whether key expiry is disabled for the device | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_blocks_incoming_connections` | Gauge | Whether the device blocks incoming connections | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_last_seen_timestamp` | Gauge | Unix timestamp when device was last seen | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_expires_timestamp` | Gauge | Unix timestamp when device key expires | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_created_timestamp` | Gauge | Unix timestamp when device was created | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_latency_ms` | Gauge | Device latency in milliseconds | `id`, `name`, `hostname`, `os`, `user`, `destination` |
-| `tailscale_device_routes_advertised` | Gauge | Number of routes advertised by device | `id`, `name`, `hostname`, `os`, `user` |
-| `tailscale_device_routes_enabled` | Gauge | Number of routes enabled for device | `id`, `name`, `hostname`, `os`, `user` |
-
-### API Key Metrics
-
-| Metric | Type | Description | Labels |
-|--------|------|-------------|--------|
-| `tailscale_keys_total` | Gauge | Total number of keys in the tailnet | - |
-| `tailscale_key_info` | Gauge | Key information (always 1) | `id`, `description`, `key_prefix` |
-| `tailscale_key_expires_timestamp` | Gauge | Unix timestamp when key expires | `id`, `description`, `key_prefix` |
-| `tailscale_key_created_timestamp` | Gauge | Unix timestamp when key was created | `id`, `description`, `key_prefix` |
-| `tailscale_key_revoked` | Gauge | Whether the key is revoked | `id`, `description`, `key_prefix` |
-
-### DNS Metrics
-
-| Metric | Type | Description | Labels |
-|--------|------|-------------|--------|
-| `tailscale_dns_info` | Gauge | DNS configuration information (always 1) | `magic_dns`, `magic_dns_suffix` |
-| `tailscale_dns_nameservers` | Gauge | Number of configured nameservers | - |
-| `tailscale_dns_search_paths` | Gauge | Number of configured search paths | - |
-
-### User Metrics
-
-| Metric | Type | Description | Labels |
-|--------|------|-------------|--------|
-| `tailscale_users_total` | Gauge | Total number of users in the tailnet | - |
-| `tailscale_users_by_role` | Gauge | Number of users by role | `role` |
-| `tailscale_users_by_status` | Gauge | Number of users by status | `status` |
-| `tailscale_user_info` | Gauge | User information (always 1) | `id`, `login_name`, `display_name`, `role`, `status`, `type` |
-| `tailscale_user_last_seen_timestamp` | Gauge | Unix timestamp when user was last seen | `id`, `login_name`, `display_name`, `role`, `status`, `type` |
-| `tailscale_user_created_timestamp` | Gauge | Unix timestamp when user was created | `id`, `login_name`, `display_name`, `role`, `status`, `type` |
-
-### Tailnet Settings Metrics
-
-| Metric | Type | Description | Labels |
-|--------|------|-------------|--------|
-| `tailscale_tailnet_settings` | Gauge | Tailnet settings configuration | `setting`, `value` |
-
-#### Tailnet Settings Details
-
-The `tailscale_tailnet_settings` metric includes the following settings:
-- `device_approval`: Whether device approval is required
-- `device_approval_notification`: Whether device approval notifications are enabled
-- `users_approval`: Whether user approval is required
-- `network_flow_logging`: Whether network flow logging is enabled
-- `regional_routing`: Whether regional routing is enabled
-- `users_role_allowed_exit_node_count`: Number of user roles allowed to join as exit nodes
-
 ## Prometheus Configuration
 
 Add the following to your `prometheus.yml`:
@@ -186,6 +112,9 @@ scrape_configs:
     metrics_path: /metrics
 ```
 
+## Metrics
+
+You can find the full list of metrics in the [METRICS.md](./docs/METRICS.md) file.
 
 ## License
 
