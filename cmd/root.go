@@ -131,7 +131,7 @@ func runExporter(cmd *cobra.Command, args []string) error {
 	log.Printf("Successfully obtained OAuth token (expires: %v)", token.Expiry)
 
 	// Create collector with OAuth HTTP client
-	tsCollector = collector.NewTailscaleCollectorWithClient(httpClient, tailnet)
+	tsCollector = collector.NewTailscaleCollector(httpClient, tailnet)
 
 	prometheus.MustRegister(tsCollector)
 

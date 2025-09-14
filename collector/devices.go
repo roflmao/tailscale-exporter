@@ -17,7 +17,14 @@ var (
 		"device", "Device information and status", []string{"id", "name", "hostname", "os", "client_version", "user", "tailscale_ip", "machine_key", "node_key"})
 	deviceInfoDesc = newDesc(
 		devicesSubsystem, "info", "Device information", []string{"id", "name", "hostname", "os", "client_version", "user", "tailscale_ip", "machine_key", "node_key"})
-	deviceLastSeenDesc          = newDesc(devicesSubsystem, "last_seen_timestamp", "Unix timestamp when device was last seen", []string{"id", "name", "hostname", "os", "user"})
+	deviceLastSeenDesc = newDesc(
+		devicesSubsystem, "last_seen_timestamp", "Unix timestamp when device was last seen",
+		[]string{
+			"id",
+			"name",
+			"hostname", "os", "user",
+		},
+	)
 	deviceExpiresDesc           = newDesc(devicesSubsystem, "expires_timestamp", "Unix timestamp when device key expires", []string{"id", "name", "hostname", "os", "user"})
 	deviceCreatedDesc           = newDesc(devicesSubsystem, "created_timestamp", "Unix timestamp when device was created", []string{"id", "name", "hostname", "os", "user"})
 	deviceLatencyDesc           = newDesc(devicesSubsystem, "latency_ms", "Device latency in milliseconds", []string{"id", "name", "hostname", "os", "user", "derp_region"})
