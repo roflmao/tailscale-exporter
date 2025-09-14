@@ -1,4 +1,4 @@
-module github.com/example/tailscale-exporter
+module github.com/adinhodovic/tailscale-exporter
 
 go 1.25.0
 

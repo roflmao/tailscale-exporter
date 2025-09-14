@@ -16,7 +16,7 @@ import (
 	"github.com/spf13/cobra"
 	"golang.org/x/oauth2/clientcredentials"
 
-	"github.com/example/tailscale-exporter/pkg/collector"
+	"github.com/adinhodovic/tailscale-exporter/collector"
 )
 
 var (
