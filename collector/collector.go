@@ -17,16 +17,32 @@ const (
 )
 
 var (
-	factories              = make(map[string]func(collectorConfig) (Collector, error))
+	factories = make(
+		map[string]func(collectorConfig) (Collector, error),
+	)
 	initiatedCollectorsMtx = sync.Mutex{}
 	initiatedCollectors    = make(map[string]Collector)
-	forcedCollectors       = map[string]bool{} // collectors which have been explicitly enabled or disabled
 )
 
 var (
-	upDesc             = newDesc("", "up", "Whether Tailscale API is accessible.", nil)
-	scrapeDurationDesc = newDesc("scrape", "collector_duration_seconds", "tailscale_exporter: Duration of a collector scrape.", []string{"collector"})
-	scrapeSuccessDesc  = newDesc("scrape", "collector_success", "tailscale_exporter: Whether a collector succeeded.", []string{"collector"})
+	upDesc = newDesc(
+		"",
+		"up",
+		"Whether Tailscale API is accessible.",
+		nil,
+	)
+	scrapeDurationDesc = newDesc(
+		"scrape",
+		"collector_duration_seconds",
+		"tailscale_exporter: Duration of a collector scrape.",
+		[]string{"collector"},
+	)
+	scrapeSuccessDesc = newDesc(
+		"scrape",
+		"collector_success",
+		"tailscale_exporter: Whether a collector succeeded.",
+		[]string{"collector"},
+	)
 )
 
 func boolAsFloat(b bool) float64 {
@@ -40,33 +56,46 @@ type collectorConfig struct {
 	logger *slog.Logger
 }
 
-func newDesc(subsystem, name, help string, variableLabels []string) *prometheus.Desc {
+func newDesc(
+	subsystem, name, help string,
+	variableLabels []string,
+) *prometheus.Desc {
 	return prometheus.NewDesc(
 		prometheus.BuildFQName(namespace, subsystem, name),
 		help, variableLabels, nil,
 	)
 }
 
-func registerCollector(name string, createFunc func(collectorConfig) (Collector, error)) {
+func registerCollector(
+	name string,
+	createFunc func(collectorConfig) (Collector, error),
+) {
 	// Register the create function for this collector
 	factories[name] = createFunc
 }
 
 type Collector interface {
-	Update(ctx context.Context, client *tailscale.Client, ch chan<- prometheus.Metric) error
+	Update(
+		ctx context.Context,
+		client *tailscale.Client,
+		ch chan<- prometheus.Metric,
+	) error
 }
 
-// TailscaleCollector collects comprehensive Tailscale metrics
+// TailscaleCollector collects comprehensive Tailscale metrics.
 type TailscaleCollector struct {
 	client *tailscale.Client
-	ctx    context.Context
 
 	Collectors map[string]Collector
 	logger     *slog.Logger
 }
 
-// NewTailscaleCollector creates the Tailscale collector
-func NewTailscaleCollector(logger *slog.Logger, httpClient *http.Client, tailnet string) (*TailscaleCollector, error) {
+// NewTailscaleCollector creates the Tailscale collector.
+func NewTailscaleCollector(
+	logger *slog.Logger,
+	httpClient *http.Client,
+	tailnet string,
+) (*TailscaleCollector, error) {
 	t := &TailscaleCollector{
 		logger: logger,
 	}
@@ -78,14 +107,14 @@ func NewTailscaleCollector(logger *slog.Logger, httpClient *http.Client, tailnet
 		if collector, ok := initiatedCollectors[key]; ok {
 			collectors[key] = collector
 		} else {
-			collector, err := factories[key](collectorConfig{
+			coll, err := factories[key](collectorConfig{
 				logger: logger.With("collector", key),
 			})
 			if err != nil {
 				return nil, err
 			}
-			collectors[key] = collector
-			initiatedCollectors[key] = collector
+			collectors[key] = coll
+			initiatedCollectors[key] = coll
 		}
 	}
 
@@ -100,8 +129,8 @@ func NewTailscaleCollector(logger *slog.Logger, httpClient *http.Client, tailnet
 	return t, nil
 }
 
-// Describe implements the prometheus.Collector interface
-func (c *TailscaleCollector) Describe(ch chan<- *prometheus.Desc) {
+// Describe implements the prometheus.Collector interface.
+func (t *TailscaleCollector) Describe(ch chan<- *prometheus.Desc) {
 	ch <- upDesc
 	ch <- scrapeDurationDesc
 	ch <- scrapeSuccessDesc
@@ -122,17 +151,33 @@ func (t *TailscaleCollector) Collect(ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(upDesc, prometheus.GaugeValue, 1)
 }
 
-func execute(ctx context.Context, name string, c Collector, client *tailscale.Client, ch chan<- prometheus.Metric, logger *slog.Logger) {
+func execute(
+	ctx context.Context,
+	name string,
+	c Collector,
+	client *tailscale.Client,
+	ch chan<- prometheus.Metric,
+	logger *slog.Logger,
+) {
 	begin := time.Now()
 	err := c.Update(ctx, client, ch)
 	duration := time.Since(begin)
 	var success float64
 
 	if err != nil {
-		logger.Error("collector failed", "name", name, "duration_seconds", duration.Seconds(), "err", err)
+		logger.ErrorContext(
+			ctx,
+			"collector failed",
+			"name",
+			name,
+			"duration_seconds",
+			duration.Seconds(),
+			"err",
+			err,
+		)
 		success = 0
 	} else {
-		logger.Debug("collector succeeded", "name", name, "duration_seconds", duration.Seconds())
+		logger.DebugContext(ctx, "collector succeeded", "name", name, "duration_seconds", duration.Seconds())
 		success = 1
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, duration.Seconds(), name)

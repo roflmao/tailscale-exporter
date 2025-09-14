@@ -25,14 +25,19 @@ var (
 	)
 	usersLastSeenDesc = newDesc(
 		usersSubsystem,
-		"last_seen_timestamp", "Unix timestamp when user was last seen", []string{"id", "login_name", "display_name"})
+		"last_seen_timestamp",
+		"Unix timestamp when user was last seen",
+		[]string{"id", "login_name", "display_name"},
+	)
 	usersCreatedDesc = newDesc(
 		usersSubsystem,
-		"created_timestamp", "Unix timestamp when user was created", []string{"id", "login_name", "display_name"})
+		"created_timestamp",
+		"Unix timestamp when user was created",
+		[]string{"id", "login_name", "display_name"},
+	)
 )
 
 type TailscaleUsersCollector struct {
-	ctx context.Context
 	log *slog.Logger
 }
 
@@ -46,12 +51,21 @@ func NewTailscaleUsersCollector(config collectorConfig) (Collector, error) {
 	}, nil
 }
 
-func (c TailscaleUsersCollector) Update(ctx context.Context, client *tailscale.Client, ch chan<- prometheus.Metric) error {
-	c.log.Debug("Collecting users metrics")
+func (c TailscaleUsersCollector) Update(
+	ctx context.Context,
+	client *tailscale.Client,
+	ch chan<- prometheus.Metric,
+) error {
+	c.log.DebugContext(ctx, "Collecting users metrics")
 
 	users, err := client.Users().List(ctx, nil, nil)
 	if err != nil {
-		c.log.Error("Error getting Tailscale users", "error", err.Error())
+		c.log.ErrorContext(
+			ctx,
+			"Error getting Tailscale users",
+			"error",
+			err.Error(),
+		)
 		return err
 	}
 

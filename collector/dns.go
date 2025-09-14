@@ -26,7 +26,6 @@ var (
 )
 
 type TailscaleDNSCollector struct {
-	ctx context.Context
 	log *slog.Logger
 }
 
@@ -40,12 +39,21 @@ func NewTailscaleDNSCollector(config collectorConfig) (Collector, error) {
 	}, nil
 }
 
-func (c TailscaleDNSCollector) Update(ctx context.Context, client *tailscale.Client, ch chan<- prometheus.Metric) error {
-	c.log.Debug("Collecting dns metrics")
+func (c TailscaleDNSCollector) Update(
+	ctx context.Context,
+	client *tailscale.Client,
+	ch chan<- prometheus.Metric,
+) error {
+	c.log.DebugContext(ctx, "Collecting dns metrics")
 
 	nameservers, err := client.DNS().Nameservers(ctx)
 	if err != nil {
-		c.log.Error("Error getting Tailscale dns nameservers", "error", err.Error())
+		c.log.ErrorContext(
+			ctx,
+			"Error getting Tailscale dns nameservers",
+			"error",
+			err.Error(),
+		)
 		return err
 	}
 
@@ -61,7 +69,12 @@ func (c TailscaleDNSCollector) Update(ctx context.Context, client *tailscale.Cli
 
 	magicDns, err := client.DNS().Preferences(ctx)
 	if err != nil {
-		c.log.Error("Error getting Tailscale magic dns", "error", err.Error())
+		c.log.ErrorContext(
+			ctx,
+			"Error getting Tailscale magic dns",
+			"error",
+			err.Error(),
+		)
 		return err
 	}
 

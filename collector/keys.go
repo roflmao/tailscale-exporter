@@ -34,7 +34,6 @@ var (
 )
 
 type TailscaleKeysCollector struct {
-	ctx context.Context
 	log *slog.Logger
 }
 
@@ -48,7 +47,11 @@ func NewTailscaleKeysCollector(config collectorConfig) (Collector, error) {
 	}, nil
 }
 
-func (c TailscaleKeysCollector) Update(ctx context.Context, client *tailscale.Client, ch chan<- prometheus.Metric) error {
+func (c TailscaleKeysCollector) Update(
+	ctx context.Context,
+	client *tailscale.Client,
+	ch chan<- prometheus.Metric,
+) error {
 	c.log.Debug("Collecting keys metrics")
 
 	keys, err := client.Keys().List(ctx, true)

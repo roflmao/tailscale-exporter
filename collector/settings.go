@@ -37,7 +37,6 @@ var (
 )
 
 type TailscaleTailnetSettingsCollector struct {
-	ctx context.Context
 	log *slog.Logger
 }
 
@@ -51,12 +50,20 @@ func NewTailscaleSettingsCollector(config collectorConfig) (Collector, error) {
 	}, nil
 }
 
-func (c TailscaleTailnetSettingsCollector) Update(ctx context.Context, client *tailscale.Client, ch chan<- prometheus.Metric) error {
+func (c TailscaleTailnetSettingsCollector) Update(
+	ctx context.Context,
+	client *tailscale.Client,
+	ch chan<- prometheus.Metric,
+) error {
 	c.log.Debug("Collecting Tailscale Tailnet settings metrics")
 
 	settings, err := client.TailnetSettings().Get(ctx)
 	if err != nil {
-		c.log.Error("Error getting Tailscale Tailnet settings", "error", err.Error())
+		c.log.Error(
+			"Error getting Tailscale Tailnet settings",
+			"error",
+			err.Error(),
+		)
 		return err
 	}
 
