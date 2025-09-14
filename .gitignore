@@ -1,1 +1,4 @@
-tailscale-exporter
+/tailscale-exporter
+.envrc
+.env
+bin

@@ -37,19 +37,10 @@ This repository also contains the `tailscale-mixin` that provides Prometheus ale
 ### 1. Generate API Access Token
 
 1. Go to the [Tailscale admin console](https://login.tailscale.com/admin/settings/keys)
-2. Navigate to **Settings** → **Keys**
-3. Generate a new **API access token**
-4. Set expiration period (1-90 days)
+2. Navigate to **Settings** → **Oauth Client**
+3. Click on **Create new OAuth client**
+4. Add read access for DNS, Devices, Users, and Keys
 5. Copy the generated token (it's only shown once)
-
-### 2. Get Your Tailnet Identifier
-
-Your tailnet identifier is typically:
-- Your organization name (e.g., `mycompany`)
-- Your email domain (e.g., `example.com`)
-- Or a custom tailnet name you've set
-
-You can find it in the Tailscale admin console URL: `https://login.tailscale.com/admin/machines/[tailnet]`
 
 ## Installation
 
@@ -63,7 +54,8 @@ A Helm chart is available in the `charts/tailscale-exporter` directory. You can 
 
 ```bash
 helm install tailscale-exporter ./charts/tailscale-exporter \
-  --set env.TAILSCALE_API_KEY="tskey-api-xxxxx" \
+  --set env.TAILSCALE_OAUTH_CLIENT_ID="your-client-id" \
+  --set env.TAILSCALE_OAUTH_CLIENT_SECRET="your-client-secret" \
   --set env.TAILSCALE_TAILNET="your-tailnet-name"
 ```
 
@@ -74,7 +66,8 @@ helm install tailscale-exporter ./charts/tailscale-exporter \
 Set the required environment variables:
 
 ```bash
-export TAILSCALE_="tskey-api-xxxxx"
+export TAILSCALE_OAUTH_CLIENT_ID="your-client-id"
+export TAILSCALE_OAUTH_CLIENT_SECRET="your-client-secret"
 export TAILSCALE_TAILNET="your-tailnet-name"
 ```
 
@@ -90,14 +83,16 @@ The exporter will start on port 9090 by default and expose metrics at `/metrics`
 
 ```bash
 ./tailscale-exporter -h
+
+Flags:
+  -h, --help                         help for tailscale-exporter
+  -l, --listen-address string        Address to listen on for web interface and telemetry (default ":9090")
+  -m, --metrics-path string          Path under which to expose metrics (default "/metrics")
+      --oauth-client-id string       OAuth client ID (can also be set via TAILSCALE_OAUTH_CLIENT_ID environment variable)
+      --oauth-client-secret string   OAuth client secret (can also be set via TAILSCALE_OAUTH_CLIENT_SECRET environment variable)
+  -t, --tailnet string               Tailscale tailnet (can also be set via TAILSCALE_TAILNET environment variable)
 ```
 
-Available flags:
-- `-web.listen-address`: Address to listen on (default: `:9090`)
-- `-web.telemetry-path`: Path for metrics endpoint (default: `/metrics`)
-- `-api-key`: Tailscale API key (can also use TAILSCALE_API_KEY env var)
-- `-tailnet`: Tailscale tailnet identifier (can also use TAILSCALE_TAILNET env var)
-- `-version`: Show version information
 
 ## Prometheus Configuration
 
