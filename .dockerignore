@@ -1,0 +1,10 @@
+.envrc
+.env
+
+bin
+vendor
+tmp
+air
+
+.git
+.gitignore
