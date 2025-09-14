@@ -2,6 +2,8 @@
 
 A Prometheus exporter for Tailscale that provides tailnet-level metrics using the Tailscale API.
 
+This repository also contains the `tailscale-mixin` that provides Prometheus alerts and rules and Grafana dashboard for tailnet-level metrics but also machine metrics.
+
 ## Features
 
 - **Comprehensive Device Metrics**: Detailed per-device metrics including:
@@ -30,12 +32,6 @@ A Prometheus exporter for Tailscale that provides tailnet-level metrics using th
   - Exit node role permissions
 - **API Health**: Monitoring of Tailscale API accessibility
 
-## Prerequisites
-
-- Go 1.21 or later
-- Tailscale API access token with appropriate permissions
-- Tailnet identifier (your organization's tailnet name)
-
 ## Authentication Setup
 
 ### 1. Generate API Access Token
@@ -57,19 +53,18 @@ You can find it in the Tailscale admin console URL: `https://login.tailscale.com
 
 ## Installation
 
-### From Source
+### Docker Image
+
+There's a Docker image available on Docker Hub: [tailscale-exporter](https://hub.docker.com/r/adinhodovic/tailscale-exporter)
+
+### Helm
+
+A Helm chart is available in the `charts/tailscale-exporter` directory. You can install it using Helm:
 
 ```bash
-git clone <repository-url>
-cd tailscale-exporter
-go mod tidy
-go build -o tailscale-exporter .
-```
-
-### Using Go Install
-
-```bash
-go install github.com/example/tailscale-exporter@latest
+helm install tailscale-exporter ./charts/tailscale-exporter \
+  --set env.TAILSCALE_API_KEY="tskey-api-xxxxx" \
+  --set env.TAILSCALE_TAILNET="your-tailnet-name"
 ```
 
 ## Usage
@@ -79,7 +74,7 @@ go install github.com/example/tailscale-exporter@latest
 Set the required environment variables:
 
 ```bash
-export TAILSCALE_API_KEY="tskey-api-xxxxx"
+export TAILSCALE_="tskey-api-xxxxx"
 export TAILSCALE_TAILNET="your-tailnet-name"
 ```
 
@@ -104,27 +99,6 @@ Available flags:
 - `-tailnet`: Tailscale tailnet identifier (can also use TAILSCALE_TAILNET env var)
 - `-version`: Show version information
 
-### Examples
-
-```bash
-# Using environment variables
-export TAILSCALE_API_KEY="tskey-api-xxxxx"
-export TAILSCALE_TAILNET="mycompany"
-./tailscale-exporter
-
-# Using command line flags
-./tailscale-exporter -api-key="tskey-api-xxxxx" -tailnet="mycompany"
-
-# Start on custom port
-./tailscale-exporter -web.listen-address=":8080"
-
-# Custom metrics path
-./tailscale-exporter -web.telemetry-path="/tailscale-metrics"
-
-# Show version
-./tailscale-exporter -version
-```
-
 ## Metrics
 
 The exporter provides comprehensive metrics about your Tailscale network, including detailed per-device information, API keys, DNS configuration, users, and tailnet settings.
@@ -134,6 +108,7 @@ The exporter provides comprehensive metrics about your Tailscale network, includ
 | Metric | Type | Description | Labels |
 |--------|------|-------------|--------|
 | `tailscale_up` | Gauge | Whether Tailscale API is accessible | - |
+
 
 ### Device Metrics
 
@@ -204,151 +179,14 @@ Add the following to your `prometheus.yml`:
 
 ```yaml
 scrape_configs:
-  - job_name: 'tailscale'
+  - job_name: 'tailscale-exporter'
     static_configs:
       - targets: ['localhost:9090']
     scrape_interval: 30s
     metrics_path: /metrics
 ```
 
-## Docker Usage
-
-### Building Docker Image
-
-```bash
-# Create Dockerfile
-cat > Dockerfile << 'EOF'
-FROM golang:1.21-alpine AS builder
-WORKDIR /app
-COPY go.mod go.sum ./
-RUN go mod download
-COPY . .
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o tailscale-exporter .
-
-FROM alpine:latest
-RUN apk --no-cache add ca-certificates curl
-WORKDIR /root/
-COPY --from=builder /app/tailscale-exporter .
-EXPOSE 9090
-CMD ["./tailscale-exporter"]
-EOF
-
-# Build
-docker build -t tailscale-exporter .
-```
-
-### Running with Docker
-
-```bash
-# Run with environment variables
-docker run -d \
-  --name tailscale-exporter \
-  -p 9090:9090 \
-  -e TAILSCALE_API_KEY="tskey-api-xxxxx" \
-  -e TAILSCALE_TAILNET="your-tailnet-name" \
-  tailscale-exporter
-```
-
-## Systemd Service
-
-Create a systemd service file:
-
-```bash
-sudo tee /etc/systemd/system/tailscale-exporter.service > /dev/null << 'EOF'
-[Unit]
-Description=Tailscale Prometheus Exporter
-After=network.target tailscaled.service
-Wants=tailscaled.service
-
-[Service]
-Type=simple
-User=tailscale-exporter
-Group=tailscale-exporter
-ExecStart=/usr/local/bin/tailscale-exporter
-Restart=always
-RestartSec=5
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=tailscale-exporter
-
-[Install]
-WantedBy=multi-user.target
-EOF
-
-# Enable and start
-sudo systemctl daemon-reload
-sudo systemctl enable tailscale-exporter
-sudo systemctl start tailscale-exporter
-```
-
-## Troubleshooting
-
-### Common Issues
-
-1. **"API key is required" error**
-   - Ensure you have set TAILSCALE_API_KEY environment variable or -api-key flag
-   - Verify the API key is valid and not expired
-
-2. **"Tailnet is required" error**
-   - Ensure you have set TAILSCALE_TAILNET environment variable or -tailnet flag
-   - Verify the tailnet name matches your organization's tailnet
-
-3. **"API request failed with status 401" error**
-   - API key is invalid or expired
-   - Generate a new API key from the Tailscale admin console
-
-4. **"API request failed with status 403" error**
-   - API key doesn't have sufficient permissions
-   - Ensure you're an Owner, Admin, IT admin, or Network admin
-
-5. **No metrics appearing**
-   - Check that the API key and tailnet are correctly configured
-   - Verify the exporter can reach the Tailscale API: `curl localhost:9090/metrics`
-
-### Debugging
-
-Enable debug logging by checking the exporter logs:
-
-```bash
-# If running directly
-./tailscale-exporter 2>&1 | tee exporter.log
-
-# If running with systemd
-journalctl -u tailscale-exporter -f
-```
-
-Test Tailscale API connectivity:
-
-```bash
-# Test API access directly
-curl -H "Authorization: Bearer YOUR_API_KEY" \
-  "https://api.tailscale.com/api/v2/tailnet/YOUR_TAILNET/devices"
-
-# Test the exporter endpoint
-curl http://localhost:9090/metrics | grep tailscale
-```
-
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
-
-## Security Considerations
-
-- The exporter requires a Tailscale API access token with appropriate permissions
-- API tokens are sensitive credentials that should be stored securely
-- Consider using environment variables or secret management systems for API tokens
-- The exporter exposes network topology and device information via metrics
-- Consider network access controls for the metrics endpoint
-- Run with minimal required privileges
-- Monitor access to the metrics endpoint in production environments
-- Regularly rotate API access tokens according to your security policies
-- API tokens have configurable expiration periods (1-90 days)
-
