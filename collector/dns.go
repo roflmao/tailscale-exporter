@@ -11,10 +11,10 @@ import (
 const dnsSubsystem = "dns"
 
 var (
-	dnsNameserverDesc = newDesc(
+	dnsNameserversDesc = newDesc(
 		dnsSubsystem,
-		"nameserver",
-		"Tailscale DNS nameserver configuration.",
+		"nameservers_info",
+		"Tailscale DNS nameservers configuration.",
 		[]string{"nameserver"},
 	)
 	dnsMagicDNSDesc = newDesc(
@@ -60,7 +60,7 @@ func (c TailscaleDNSCollector) Update(
 	// Nameserver metrics
 	for _, ns := range nameservers {
 		ch <- prometheus.MustNewConstMetric(
-			dnsNameserverDesc,
+			dnsNameserversDesc,
 			prometheus.GaugeValue,
 			1,
 			ns,
