@@ -127,6 +127,8 @@ func runExporter(cmd *cobra.Command, args []string) error {
 			"users:read",
 			"dns:read",
 			"auth_keys:read",
+			"feature_settings:read",
+			"policy_file:read",
 		}, // Request needed scopes
 	}
 
