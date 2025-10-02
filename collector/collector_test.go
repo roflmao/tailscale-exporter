@@ -72,7 +72,10 @@ func (m *MockDevicesClient) List(ctx context.Context) ([]tailscale.Device, error
 	return m.devices, nil
 }
 
-func (m *MockDevicesClient) SubnetRoutes(ctx context.Context, deviceID string) (*tailscale.DeviceRoutes, error) {
+func (m *MockDevicesClient) SubnetRoutes(
+	ctx context.Context,
+	deviceID string,
+) (*tailscale.DeviceRoutes, error) {
 	if m.routesErr != nil {
 		return nil, m.routesErr
 	}
