@@ -52,8 +52,8 @@ func TestTailscaleDevicesCollector_Update(t *testing.T) {
 							Expires: tailscale.Time{
 								Time: time.Unix(1640995200, 0),
 							},
-							MachineKey:       "mkey:abcd1234",
-							NodeKey:          "nodekey:efgh5678",
+							MachineKey: "mkey:abcd1234",
+							NodeKey:    "nodekey:efgh5678",
 							ClientConnectivity: &tailscale.ClientConnectivity{
 								DERPLatency: map[string]tailscale.DERPRegion{
 									"nyc": {LatencyMilliseconds: 50},

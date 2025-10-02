@@ -224,7 +224,14 @@ func (c TailscaleDevicesCollector) Update(
 		// Routes metrics - fetch from separate API endpoint
 		routes, err := client.Devices().SubnetRoutes(ctx, device.ID)
 		if err != nil {
-			c.log.DebugContext(ctx, "Error getting device routes", "device_id", device.ID, "error", err.Error())
+			c.log.DebugContext(
+				ctx,
+				"Error getting device routes",
+				"device_id",
+				device.ID,
+				"error",
+				err.Error(),
+			)
 			// If we can't get routes, emit 0
 			ch <- prometheus.MustNewConstMetric(devicesRoutesAdvertisedDesc, prometheus.GaugeValue, 0,
 				device.ID, device.Name, device.Hostname, device.OS, device.User)
