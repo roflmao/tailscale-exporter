@@ -95,9 +95,15 @@ local tbOverride = tbStandardOptions.override;
 
         devicesByVersion: |||
           count(
-            tailscale_devices_info{
-              %(tailnet)s
-            }
+            label_replace(
+              tailscale_devices_info{
+                %(tailnet)s
+              },
+              "client_version",
+              "$1",
+              "client_version",
+              "^(\\d+\\.\\d+\\.\\d+).*"
+            )
           ) by (client_version)
         ||| % defaultFilters,
 
