@@ -59,8 +59,10 @@ func (m *MockDNSClient) Preferences(ctx context.Context) (*tailscale.DNSPreferen
 
 // MockDevicesClient implements the DevicesAPI interface for testing
 type MockDevicesClient struct {
-	devices    []tailscale.Device
-	devicesErr error
+	devices       []tailscale.Device
+	devicesErr    error
+	routes        map[string]*tailscale.DeviceRoutes
+	routesErr     error
 }
 
 func (m *MockDevicesClient) List(ctx context.Context) ([]tailscale.Device, error) {
@@ -68,6 +70,18 @@ func (m *MockDevicesClient) List(ctx context.Context) ([]tailscale.Device, error
 		return nil, m.devicesErr
 	}
 	return m.devices, nil
+}
+
+func (m *MockDevicesClient) SubnetRoutes(ctx context.Context, deviceID string) (*tailscale.DeviceRoutes, error) {
+	if m.routesErr != nil {
+		return nil, m.routesErr
+	}
+	if m.routes != nil {
+		if routes, ok := m.routes[deviceID]; ok {
+			return routes, nil
+		}
+	}
+	return &tailscale.DeviceRoutes{}, nil
 }
 
 // MockUsersClient implements the UsersAPI interface for testing

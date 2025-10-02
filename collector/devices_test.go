@@ -54,14 +54,18 @@ func TestTailscaleDevicesCollector_Update(t *testing.T) {
 							},
 							MachineKey:       "mkey:abcd1234",
 							NodeKey:          "nodekey:efgh5678",
-							AdvertisedRoutes: []string{"192.168.1.0/24"},
-							EnabledRoutes:    []string{"192.168.1.0/24"},
 							ClientConnectivity: &tailscale.ClientConnectivity{
 								DERPLatency: map[string]tailscale.DERPRegion{
 									"nyc": {LatencyMilliseconds: 50},
 									"lax": {LatencyMilliseconds: 100},
 								},
 							},
+						},
+					},
+					routes: map[string]*tailscale.DeviceRoutes{
+						"device-123": {
+							Advertised: []string{"192.168.1.0/24"},
+							Enabled:    []string{"192.168.1.0/24"},
 						},
 					},
 				},
