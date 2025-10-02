@@ -2,8 +2,6 @@ package collector
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -96,7 +94,6 @@ type TailscaleClient interface {
 	Keys() KeysAPI
 	DNS() DNSAPI
 	Devices() DevicesAPI
-	DeviceRoutes() DeviceRoutesAPI
 	Users() UsersAPI
 	TailnetSettings() TailnetSettingsAPI
 }
@@ -115,17 +112,7 @@ type DNSAPI interface {
 // DevicesAPI is the subset of *tailscale.DevicesResource you actually use
 type DevicesAPI interface {
 	List(ctx context.Context) ([]tailscale.Device, error)
-}
-
-// DeviceRoutesAPI provides access to device route information
-type DeviceRoutesAPI interface {
-	Get(ctx context.Context, deviceID string) (*DeviceRoutes, error)
-}
-
-// DeviceRoutes represents the routes for a device
-type DeviceRoutes struct {
-	AdvertisedRoutes []string `json:"advertisedRoutes"`
-	EnabledRoutes    []string `json:"enabledRoutes"`
+	SubnetRoutes(ctx context.Context, deviceID string) (*tailscale.DeviceRoutes, error)
 }
 
 // UsersAPI is the subset of *tailscale.UsersResource you actually use
@@ -144,14 +131,12 @@ type TailnetSettingsAPI interface {
 
 // TailscaleClientWrapper wraps the real tailscale.Client to implement our TailscaleClient interface
 type TailscaleClientWrapper struct {
-	client       *tailscale.Client
-	deviceRoutes *DeviceRoutesResource
+	client *tailscale.Client
 }
 
-func NewTailscaleClientWrapper(client *tailscale.Client, httpClient *http.Client) *TailscaleClientWrapper {
+func NewTailscaleClientWrapper(client *tailscale.Client) *TailscaleClientWrapper {
 	return &TailscaleClientWrapper{
-		client:       client,
-		deviceRoutes: &DeviceRoutesResource{client: client, httpClient: httpClient},
+		client: client,
 	}
 }
 
@@ -165,10 +150,6 @@ func (w *TailscaleClientWrapper) DNS() DNSAPI {
 
 func (w *TailscaleClientWrapper) Devices() DevicesAPI {
 	return w.client.Devices()
-}
-
-func (w *TailscaleClientWrapper) DeviceRoutes() DeviceRoutesAPI {
-	return w.deviceRoutes
 }
 
 func (w *TailscaleClientWrapper) Users() UsersAPI {
@@ -213,7 +194,7 @@ func NewTailscaleCollector(
 		HTTP:    httpClient,
 		Tailnet: tailnet,
 	}
-	t.client = NewTailscaleClientWrapper(client, httpClient)
+	t.client = NewTailscaleClientWrapper(client)
 
 	return t, nil
 }
@@ -271,36 +252,4 @@ func execute(
 	}
 	ch <- prometheus.MustNewConstMetric(scrapeDurationDesc, prometheus.GaugeValue, duration.Seconds(), name)
 	ch <- prometheus.MustNewConstMetric(scrapeSuccessDesc, prometheus.GaugeValue, success, name)
-}
-
-// DeviceRoutesResource implements DeviceRoutesAPI using direct HTTP calls
-type DeviceRoutesResource struct {
-	client  *tailscale.Client
-	httpClient *http.Client
-}
-
-func (r *DeviceRoutesResource) Get(ctx context.Context, deviceID string) (*DeviceRoutes, error) {
-	url := fmt.Sprintf("https://api.tailscale.com/api/v2/device/%s/routes", deviceID)
-
-	req, err := http.NewRequestWithContext(ctx, "GET", url, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	resp, err := r.httpClient.Do(req)
-	if err != nil {
-		return nil, err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get device routes: status %d", resp.StatusCode)
-	}
-
-	var routes DeviceRoutes
-	if err := json.NewDecoder(resp.Body).Decode(&routes); err != nil {
-		return nil, err
-	}
-
-	return &routes, nil
 }
