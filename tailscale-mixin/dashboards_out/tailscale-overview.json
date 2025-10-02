@@ -492,7 +492,7 @@
                   "type": "prometheus",
                   "uid": "$datasource"
                },
-               "expr": "count(\n  tailscale_devices_info{\n    cluster=\"$cluster\"\n,\nnamespace=\"$namespace\",\njob=\"$job\",\ntailnet=\"$tailnet\"\n\n  }\n) by (client_version)\n",
+               "expr": "count(\n  label_replace(\n    tailscale_devices_info{\n      cluster=\"$cluster\",\n      namespace=\"$namespace\",\n      job=\"$job\",\n      tailnet=\"$tailnet\"\n    },\n    \"client_version\",\n    \"$1\",\n    \"client_version\",\n    \"^(\\\\d+\\\\.\\\\d+\\\\.\\\\d+).*\"\n  )\n) by (client_version)\n",
                "instant": true,
                "legendFormat": "{{ client_version }}"
             }
