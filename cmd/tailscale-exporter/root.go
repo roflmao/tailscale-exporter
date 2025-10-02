@@ -124,6 +124,7 @@ func runExporter(cmd *cobra.Command, args []string) error {
 		TokenURL:     "https://api.tailscale.com/api/v2/oauth/token",
 		Scopes: []string{
 			"devices:read",
+			"devices:routes:read",
 			"users:read",
 			"dns:read",
 			"auth_keys:read",
